@@ -47,4 +47,10 @@ namespace cw3.Services
         public int IdStudy { get; set; }
         public DateTime StartDate { get; set; }
     }
+
+    public class LoginRequest
+    {
+        public string login { get; set; }
+        public string password { get; set; }
+    }
 }

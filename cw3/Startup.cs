@@ -15,6 +15,9 @@ using cw3.Services;
 using Microsoft.AspNetCore.Http;
 using System.IO;
 using cw3.Middlewares;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace cw3
 {
@@ -32,12 +35,30 @@ namespace cw3
         public void ConfigureServices(IServiceCollection services)
         {
             //services.AddSingleton<IDbService, MockDbService>();
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(option =>
+            {
+                option.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidIssuer = "lol",
+                    ValidAudience = "admin",
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["SecretKey"]))
+                };
+
+
+            });
+
+
+
+
             services.AddSingleton<IStudentsDbService, SqlServerDbService>();
 
             services.AddTransient<IDbService, DbService>();
-            //service.AddControllers();
-
             services.AddControllers();
+
+            //services.AddControllers().AddXmlSerializerFormatters(); 
         }
 
         /*
@@ -59,36 +80,39 @@ namespace cw3
             }
             //context - html, polecenie kore przychodzi
             //Middleware - kolejnoœæ ma istotne znaczenie
+            /*
+                        app.Use(async (context, next) =>
+                        {
+                            System.Console.WriteLine("StartCheck");
 
-            app.Use(async (context, next) =>
-            {
-                System.Console.WriteLine("StartCheck");
-                
-                //sprawdzamy czy klucz jest
-                if (!context.Request.Headers.ContainsKey("Index"))
-                {
-                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    await context.Response.WriteAsync("Nie podano indexu w headers");
-                    return;
-                }
-                //Czy jest taki student
-                var index = context.Request.Headers["Index"].ToString();
-                if (!dbService.checkIndex(index))
-                {
-                    //informacja nie ma takiego studenta
-                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    await context.Response.WriteAsync("Nie ma takiego studenta");
-                    return;
-                }
-                System.Console.WriteLine("Checked");
-                //Zapis
-                await next();
-            });
+                            //sprawdzamy czy klucz jest
+                            if (!context.Request.Headers.ContainsKey("Index"))
+                            {
+                                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                                await context.Response.WriteAsync("Nie podano indexu w headers");
+                                return;
+                            }
+                            //Czy jest taki student
+                            var index = context.Request.Headers["Index"].ToString();
+                            if (!dbService.checkIndex(index))
+                            {
+                                //informacja nie ma takiego studenta
+                                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                                await context.Response.WriteAsync("Nie ma takiego studenta");
+                                return;
+                            }
+                            System.Console.WriteLine("Checked");
+                            //Zapis
+                            await next();
+                        });
+            */
             //Najpierw sprawdzamy studenta a potem zapisujemy
             //Zapis po sprawdzeniu
-            app.UseMiddleware<LoggingMiddleware>();
+            //app.UseMiddleware<LoggingMiddleware>();
 
             app.UseRouting();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 
