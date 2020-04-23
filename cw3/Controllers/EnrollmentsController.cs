@@ -64,13 +64,11 @@ namespace cw3.Controllers
         //Sprawdzam czy role dzialaja
         [HttpPost("s")]
         [Authorize(Roles = "student")]
-        //[Authorize(Users = "LOL")]
+        //[Authorize(Users = "Buka")]
         public IActionResult postForSutdent()
         {
-
             return Unauthorized("You are only student bro :P");
         }
-
 
         [AllowAnonymous]
         [HttpPost("login")]
@@ -79,16 +77,15 @@ namespace cw3.Controllers
 
             if (checkPassword(login.password))
             {
+                //właściowści tokenu
                 var claims = new[]
                 {
-                //new Claim(ClaimTypes.NameIdentifier, "1"),
-                new Claim(ClaimTypes.Name, "LOL"),
-                //new Claim(ClaimTypes.Role, "admin"),
+                new Claim(ClaimTypes.NameIdentifier, "1"),
+                new Claim(ClaimTypes.Name, "Buka"),
                 new Claim(ClaimTypes.Role, "student"),
+                //new Claim(ClaimTypes.Role, "admin"),
                 //new Claim(ClaimTypes.Role, "employee")
             };
-
-
 
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["SecretKey"]));
                 var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -101,9 +98,11 @@ namespace cw3.Controllers
                 expires: DateTime.Now.AddMinutes(120),
                 signingCredentials: creds
                 );
-                //Sprawdzałem czemu nie dziala i po prostu secretKey byl za krotki :P
+
+                //Sprawdzałem czemu key nie dziala i po prostu secretKey byl za krotki :P
                 //IdentityModelEventSource.ShowPII = true;
 
+                //Wyśli token
                 return Ok(new
                 {
                     AccessToken = new JwtSecurityTokenHandler().WriteToken(token),

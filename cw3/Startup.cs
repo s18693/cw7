@@ -42,8 +42,8 @@ namespace cw3
                     ValidateIssuer = true,
                     ValidateAudience = true,
                     ValidateLifetime = true,
-                    ValidIssuer = "lol",
-                    ValidAudience = "admin",
+                    ValidIssuer = "BukiTata",
+                    ValidAudience = "user",
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["SecretKey"]))
                 };
 
