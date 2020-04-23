@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Logging;
+using System.Data.SqlClient;
 
 namespace cw3.Controllers
 {
@@ -19,6 +20,8 @@ namespace cw3.Controllers
     [ApiController]
     public class EnrollmentsController : ControllerBase
     {
+        string SqlConnection = "Data Source=db-mssql;Initial Catalog=s18693;Integrated Security=True";
+
         private readonly IStudentsDbService dbService;
         public IConfiguration Configuration { get; set; }
 
@@ -54,10 +57,27 @@ namespace cw3.Controllers
             return Created(" ", dbService.GetEnrollment());
 
         }
-        private bool checkPassword(string p)
+        private bool checkPassword(string index, string p)
         {
-            if (p.Equals("a"))
-                return true;
+            using (var client = new SqlConnection(SqlConnection))
+            using (var command = new SqlCommand())
+            {
+                command.Connection = client;
+                client.Open();
+
+                command.CommandText = "select StudentN.Password from StudentN where StudentN.IndexNumber like '" + index + "'";
+                var read = command.ExecuteReader();
+                if(read.Read())
+                {
+                    Console.WriteLine("Read " + read[0].ToString());
+                    if (p.Equals(read[0].ToString()))
+                        return true;
+                    else
+                        return false;
+                }
+                if (!read.Read())
+                    return false;
+            }
             return false;
         }
 
@@ -75,13 +95,13 @@ namespace cw3.Controllers
         public IActionResult login(LoginRequest login)
         {
 
-            if (checkPassword(login.password))
+            if (checkPassword(login.login, login.password))
             {
                 //właściowści tokenu
                 var claims = new[]
                 {
                 new Claim(ClaimTypes.NameIdentifier, "1"),
-                new Claim(ClaimTypes.Name, "Buka"),
+                new Claim(ClaimTypes.Name, "Robert"),
                 new Claim(ClaimTypes.Role, "student"),
                 //new Claim(ClaimTypes.Role, "admin"),
                 //new Claim(ClaimTypes.Role, "employee")
@@ -92,8 +112,8 @@ namespace cw3.Controllers
 
                 var token = new JwtSecurityToken
                 (
-                issuer: "student",
-                audience: "student",
+                issuer: "buka",
+                audience: "studenta",
                 claims: claims,
                 expires: DateTime.Now.AddMinutes(120),
                 signingCredentials: creds

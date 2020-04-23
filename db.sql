@@ -186,3 +186,5 @@ drop column Password;
 
 update StudentN
 set Password = 'a'
+
+select StudentN.Password from StudentN where StudentN.IndexNumber like 's18693';
