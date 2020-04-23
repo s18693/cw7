@@ -13,6 +13,8 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Logging;
 using System.Data.SqlClient;
+using System.Security.Cryptography;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 
 namespace cw3.Controllers
 {
@@ -57,7 +59,10 @@ namespace cw3.Controllers
             return Created(" ", dbService.GetEnrollment());
 
         }
-        private bool checkPassword(string index, string p)
+
+
+
+        private bool checkPassword(string index, string p, string salt)
         {
             using (var client = new SqlConnection(SqlConnection))
             using (var command = new SqlCommand())
@@ -67,10 +72,10 @@ namespace cw3.Controllers
 
                 command.CommandText = "select StudentN.Password from StudentN where StudentN.IndexNumber like '" + index + "'";
                 var read = command.ExecuteReader();
-                if(read.Read())
+                if (read.Read())
                 {
-                    Console.WriteLine("Read " + read[0].ToString());
-                    if (p.Equals(read[0].ToString()))
+                    //Console.WriteLine("Read " + read[0].ToString());
+                    if (p.Equals(create(read[0].ToString(), salt)))
                         return true;
                     else
                         return false;
@@ -90,26 +95,45 @@ namespace cw3.Controllers
             return Unauthorized("You are only student bro :P");
         }
 
+        string create(string value, string sal)
+        {
+            Console.WriteLine(sal);
+            var v = KeyDerivation.Pbkdf2(password: value, salt: Encoding.UTF8.GetBytes(sal), prf: KeyDerivationPrf.HMACSHA512, iterationCount: 10_000, numBytesRequested: 256 / 8);
+            return Convert.ToBase64String(v);
+        }
+
+        string createSalt()
+        {
+            byte[] random = new byte[128 / 8];
+            using (var g = RandomNumberGenerator.Create())
+            {
+                g.GetBytes(random);
+                return Convert.ToBase64String(random);
+            }
+
+        }
         [AllowAnonymous]
         [HttpPost("login")]
         public IActionResult login(LoginRequest login)
         {
-
-            if (checkPassword(login.login, login.password))
+            string sal = createSalt();
+            string pas = create(login.password, sal);
+            if (checkPassword(login.login, pas, sal))
             {
                 //właściowści tokenu
                 var claims = new[]
                 {
                 new Claim(ClaimTypes.NameIdentifier, "1"),
                 new Claim(ClaimTypes.Name, "Robert"),
-                new Claim(ClaimTypes.Role, "student"),
+                //new Claim(ClaimTypes.Role, "student"),
                 //new Claim(ClaimTypes.Role, "admin"),
-                //new Claim(ClaimTypes.Role, "employee")
+                new Claim(ClaimTypes.Role, "employee")
             };
 
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["SecretKey"]));
                 var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+                //Nazywamy tak samo jak w startup !!!!! bo inaczej nie bedzie dzialac
                 var token = new JwtSecurityToken
                 (
                 issuer: "buka",

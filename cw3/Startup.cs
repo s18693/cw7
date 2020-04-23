@@ -35,6 +35,7 @@ namespace cw3
         public void ConfigureServices(IServiceCollection services)
         {
             //services.AddSingleton<IDbService, MockDbService>();
+            //domyslne dla naszej dalszej pracy !!!!!!
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(option =>
             {
                 option.TokenValidationParameters = new TokenValidationParameters
